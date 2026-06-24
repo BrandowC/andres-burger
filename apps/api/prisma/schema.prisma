@@ -1,0 +1,267 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum DeliveryType {
+  PICKUP
+  DELIVERY
+}
+
+enum PaymentMethod {
+  CASH
+  NEQUI
+  BANCOLOMBIA
+  QR
+}
+
+enum DeliveryFeeStatus {
+  NOT_APPLICABLE
+  PENDING_CONFIRMATION
+  CONFIRMED
+}
+
+enum OrderStatus {
+  PENDING_WHATSAPP
+  CONFIRMED
+  PREPARING
+  READY_FOR_PICKUP
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum UserRole {
+  ADMIN
+  EMPLOYEE
+}
+
+model Business {
+  id              String            @id @default(uuid())
+  name            String
+  slug            String            @unique
+  description     String?
+  logoUrl         String?
+  coverUrl        String?
+  phone           String
+  whatsappNumber  String
+  address         String
+  openingHours    String
+  isActive        Boolean           @default(true)
+
+  settings        BusinessSettings?
+  users           User[]
+  categories      Category[]
+  products        Product[]
+  additions       Addition[]
+  customers       Customer[]
+  orders          Order[]
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model BusinessSettings {
+  id                    String   @id @default(uuid())
+  businessId            String   @unique
+
+  acceptsPickup         Boolean  @default(true)
+  acceptsDelivery       Boolean  @default(true)
+  manualDeliveryFee     Boolean  @default(true)
+
+  primaryColor          String   @default("#F59E0B")
+  secondaryColor        String   @default("#111111")
+
+  business              Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id          String    @id @default(uuid())
+  businessId  String
+  name        String
+  email       String    @unique
+  password    String
+  role        UserRole  @default(ADMIN)
+  isActive    Boolean   @default(true)
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  businessId  String
+  name        String
+  slug        String
+  emoji       String?
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  products    Product[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([businessId, slug])
+}
+
+model Product {
+  id          String    @id @default(uuid())
+  businessId  String
+  categoryId  String
+
+  name        String
+  slug        String
+  description String?
+  price       Int
+  emoji       String?
+  imageUrl    String?
+  isAvailable Boolean   @default(true)
+  isFeatured  Boolean   @default(false)
+  sortOrder   Int       @default(0)
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  orderItems  OrderItem[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([businessId, slug])
+}
+
+model Addition {
+  id          String    @id @default(uuid())
+  businessId  String
+
+  name        String
+  slug        String
+  price       Int
+  emoji       String?
+  isActive    Boolean   @default(true)
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  orderItemAdditions OrderItemAddition[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([businessId, slug])
+}
+
+model Customer {
+  id            String    @id @default(uuid())
+  businessId    String
+
+  name          String
+  phone         String
+  address       String?
+  neighborhood  String?
+  reference     String?
+  latitude      Float?
+  longitude     Float?
+
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  orders        Order[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Order {
+  id                 String              @id @default(uuid())
+  businessId          String
+  customerId          String?
+
+  orderCode           String              @unique
+  status              OrderStatus         @default(PENDING_WHATSAPP)
+  deliveryType        DeliveryType
+  paymentMethod       PaymentMethod
+
+  subtotal            Int
+  deliveryFee         Int?
+  total               Int?
+  deliveryFeeStatus   DeliveryFeeStatus
+
+  customerNote        String?
+  adminNote           String?
+  whatsappMessage     String?
+
+  customerName        String
+  customerPhone       String
+  address             String?
+  neighborhood        String?
+  reference           String?
+  latitude            Float?
+  longitude           Float?
+
+  business            Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer            Customer?           @relation(fields: [customerId], references: [id])
+  items               OrderItem[]
+  statusHistory       OrderStatusHistory[]
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+model OrderItem {
+  id                  String    @id @default(uuid())
+  orderId             String
+  productId           String?
+
+  productNameSnapshot String
+  productPriceSnapshot Int
+  emoji               String?
+  quantity            Int
+  subtotal            Int
+  note                String?
+
+  order               Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product             Product?  @relation(fields: [productId], references: [id])
+
+  additions           OrderItemAddition[]
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model OrderItemAddition {
+  id                    String    @id @default(uuid())
+  orderItemId            String
+  additionId             String?
+
+  additionNameSnapshot   String
+  additionPriceSnapshot  Int
+  quantity               Int       @default(1)
+  subtotal               Int
+
+  orderItem              OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  addition               Addition? @relation(fields: [additionId], references: [id])
+
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+}
+
+model OrderStatusHistory {
+  id          String      @id @default(uuid())
+  orderId     String
+  oldStatus   OrderStatus?
+  newStatus   OrderStatus
+  note        String?
+
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime    @default(now())
+}

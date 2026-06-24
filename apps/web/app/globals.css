@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+html {
+  min-height: 100%;
+  background: #061a35;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100%;
+  background: #061a35;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  touch-action: manipulation;
+}
+
+@media (display-mode: standalone) {
+  body {
+    user-select: none;
+  }
+
+  input,
+  textarea {
+    user-select: text;
+  }
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.perspective-scene {
+  perspective: 1200px;
+}
+
+.food-3d-card {
+  transform-style: preserve-3d;
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.food-3d-card:hover {
+  transform: translateY(-6px) rotateX(2deg) rotateY(-2deg);
+}
+
+.food-3d-button {
+  box-shadow:
+    0 14px 0 rgba(0, 0, 0, 0.18),
+    0 24px 45px rgba(34, 211, 238, 0.18),
+    inset 0 2px 0 rgba(255, 255, 255, 0.42);
+}
+
+.food-3d-button:active {
+  transform: translateY(8px);
+  box-shadow:
+    0 6px 0 rgba(0, 0, 0, 0.18),
+    0 12px 25px rgba(34, 211, 238, 0.18),
+    inset 0 2px 0 rgba(255, 255, 255, 0.42);
+}
+
+.food-glass {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.06)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.food-text-3d {
+  text-shadow:
+    0 3px 0 rgba(0, 0, 0, 0.18),
+    0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.food-pattern {
+  background-image:
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(34, 211, 238, 0.22),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(255, 255, 255, 0.14),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 50% 90%,
+      rgba(250, 204, 21, 0.12),
+      transparent 35%
+    );
+}
