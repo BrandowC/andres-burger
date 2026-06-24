@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DeliveryType, PaymentMethod } from '@prisma/client';
-
+import { DeliveryType, PaymentMethod } from '../../../generated/prisma/client';
 type WhatsappOrderItem = {
   name: string;
   emoji?: string | null;

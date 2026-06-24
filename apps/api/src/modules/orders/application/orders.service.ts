@@ -3,7 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DeliveryFeeStatus, DeliveryType, OrderStatus } from '@prisma/client';
+import {
+  DeliveryFeeStatus,
+  DeliveryType,
+  OrderStatus,
+} from '../../../generated/prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateOrderDto } from '../presentation/dto/create-order.dto';
 import { WhatsappMessageService } from './whatsapp-message.service';

@@ -11,11 +11,13 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { DeliveryType, PaymentMethod } from '@prisma/client';
-
+import {
+  DeliveryType,
+  PaymentMethod,
+} from '../../../../generated/prisma/client';
 class CreateOrderItemAdditionDto {
   @IsUUID()
-  additionId: string;
+  additionId!: string;
 
   @IsOptional()
   @IsInt()
@@ -25,11 +27,11 @@ class CreateOrderItemAdditionDto {
 
 class CreateOrderItemDto {
   @IsUUID()
-  productId: string;
+  productId!: string;
 
   @IsInt()
   @Min(1)
-  quantity: number;
+  quantity!: number;
 
   @IsOptional()
   @IsString()
@@ -49,17 +51,17 @@ export class CreateOrderDto {
 
   @IsNotEmpty()
   @IsString()
-  customerName: string;
+  customerName!: string;
 
   @IsNotEmpty()
   @IsString()
-  customerPhone: string;
+  customerPhone!: string;
 
   @IsEnum(DeliveryType)
-  deliveryType: DeliveryType;
+  deliveryType!: DeliveryType;
 
   @IsEnum(PaymentMethod)
-  paymentMethod: PaymentMethod;
+  paymentMethod!: PaymentMethod;
 
   @IsOptional()
   @IsString()
@@ -88,5 +90,5 @@ export class CreateOrderDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)
-  items: CreateOrderItemDto[];
+  items!: CreateOrderItemDto[];
 }
