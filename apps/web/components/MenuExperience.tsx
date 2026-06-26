@@ -16,7 +16,6 @@ import {
   DeliveryType,
   PaymentMethod,
 } from "@/types/order";
-import { PublicSocialFooter } from "@/components/PublicSocialFooter";
 
 type MenuExperienceProps = {
   menu: BusinessMenu;
@@ -31,9 +30,6 @@ type ReverseGeocodeResponse = {
     neighbourhood?: string;
     city_district?: string;
     quarter?: string;
-    city?: string;
-    town?: string;
-    village?: string;
   };
 };
 
@@ -49,6 +45,9 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
   const [selectedAdditions, setSelectedAdditions] = useState<
     CartItemAddition[]
   >([]);
+
+  const [cartAnimation, setCartAnimation] = useState(false);
+  const [flyingEmoji, setFlyingEmoji] = useState<string | null>(null);
 
   const {
     items,
@@ -93,8 +92,6 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
     if (name.includes("mazorcada")) return "🌽";
     if (name.includes("coca")) return "🥤";
     if (name.includes("postobón")) return "🥤";
-    if (name.includes("uva")) return "🥤";
-    if (name.includes("colombiana")) return "🥤";
     if (name.includes("jugo")) return "🧃";
     if (name.includes("pechuga")) return "🍗";
     if (name.includes("carne")) return "🥩";
@@ -132,20 +129,36 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
     });
   }
 
+  function triggerCartAnimation(emoji: string) {
+    setFlyingEmoji(emoji);
+    setCartAnimation(true);
+
+    window.setTimeout(() => {
+      setFlyingEmoji(null);
+    }, 850);
+
+    window.setTimeout(() => {
+      setCartAnimation(false);
+    }, 600);
+  }
+
   function addSelectedProductToCart() {
     if (!selectedProduct) return;
+
+    const emoji = getSafeEmoji(selectedProduct);
 
     addItem({
       productId: selectedProduct.id,
       name: selectedProduct.name,
       price: selectedProduct.price,
-      emoji: getSafeEmoji(selectedProduct),
+      emoji,
       imageUrl: selectedProduct.imageUrl,
       quantity: selectedQuantity,
       note: selectedNote,
       additions: selectedAdditions,
     });
 
+    triggerCartAnimation(emoji);
     setSelectedProduct(null);
   }
 
@@ -170,13 +183,8 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
       data.address?.quarter ||
       "";
 
-    if (fullAddress) {
-      setAddress(fullAddress);
-    }
-
-    if (detectedNeighborhood) {
-      setNeighborhood(detectedNeighborhood);
-    }
+    if (fullAddress) setAddress(fullAddress);
+    if (detectedNeighborhood) setNeighborhood(detectedNeighborhood);
 
     if (!fullAddress && !detectedNeighborhood) {
       setGpsStatus(
@@ -294,33 +302,40 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-gradient-to-br from-[#061a35] via-[#0A3670] to-[#061a35] text-white">
-      <section className="relative px-4 pb-28 pt-5 md:px-5">
+    <main className="min-h-screen overflow-x-hidden bg-gradient-to-br from-[#061a35] via-[#0A3670] to-[#061a35] pb-24 text-white">
+      {flyingEmoji && (
+        <div className="fly-to-cart pointer-events-none fixed left-1/2 top-1/2 z-[80] flex h-16 w-16 items-center justify-center rounded-full bg-white text-4xl shadow-2xl">
+          {flyingEmoji}
+        </div>
+      )}
+
+      <section className="relative px-3 pb-8 pt-4 md:px-5 md:pt-6">
         <div className="absolute -right-28 top-10 h-96 w-96 rounded-full bg-cyan-300/20 blur-3xl" />
         <div className="absolute -left-28 top-72 h-96 w-96 rounded-full bg-yellow-200/10 blur-3xl" />
 
         <div className="relative mx-auto max-w-7xl">
-          <header className="mb-5 flex items-center justify-between gap-3 md:mb-8">
-            <Link href="/" className="flex items-center gap-3 md:gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-[1.1rem] bg-white text-3xl shadow-2xl md:h-16 md:w-16 md:rounded-[1.4rem] md:text-4xl">
+          <header className="mb-5 text-center md:mb-8">
+            <Link
+              href="/"
+              className="mx-auto inline-flex flex-col items-center"
+            >
+              <div className="flex h-14 w-14 items-center justify-center rounded-[1.2rem] bg-white text-3xl shadow-[0_18px_50px_rgba(0,0,0,0.35)] md:h-20 md:w-20 md:rounded-[1.8rem] md:text-5xl">
                 🍔
               </div>
 
-              <div>
-                <h1 className="text-2xl font-black leading-none md:text-3xl">
-                  Andrés Burger
-                </h1>
+              <h1 className="mt-3 text-2xl font-black leading-none md:text-4xl">
+                Andrés Burger
+              </h1>
 
-                <p className="mt-1 text-xs font-semibold text-blue-100 md:text-sm">
-                  Pide fácil y come rico.
-                </p>
-              </div>
+              <p className="mt-1 text-xs font-semibold text-blue-100 md:text-base">
+                Pide fácil. Come rico. Sin enredos.
+              </p>
             </Link>
           </header>
 
-          <section className="mb-6 rounded-[1.7rem] border border-white/10 bg-white/10 p-3 backdrop-blur md:mb-8 md:rounded-[2rem] md:p-4">
-            <p className="mb-4 px-1 text-xs font-black uppercase tracking-[0.25em] text-cyan-200 md:text-sm">
-              Elige una categoría
+          <section className="mb-5 rounded-[1.6rem] border border-white/10 bg-white/10 p-3 shadow-[0_20px_70px_rgba(0,0,0,0.25)] backdrop-blur md:mb-8 md:rounded-[2rem] md:p-5">
+            <p className="mb-3 text-center text-xs font-black uppercase tracking-[0.25em] text-cyan-200 md:text-sm">
+              ¿Qué deseas pedir?
             </p>
 
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-6">
@@ -332,19 +347,19 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
                     key={category.id}
                     type="button"
                     onClick={() => setActiveCategoryId(category.id)}
-                    className={`rounded-[1.2rem] px-3 py-3 text-left text-sm font-black shadow-xl transition hover:-translate-y-1 md:rounded-[1.4rem] md:px-4 md:py-4 md:text-base ${
+                    className={`rounded-[1rem] px-3 py-2.5 text-left text-xs font-black shadow-[0_12px_35px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 md:rounded-[1.3rem] md:px-4 md:py-4 md:text-base ${
                       isActive
                         ? "bg-gradient-to-br from-cyan-200 to-white text-[#061a35] ring-4 ring-cyan-300/40"
                         : "bg-white/10 text-white hover:bg-white/20"
                     }`}
                   >
-                    <span className="block text-xl md:text-2xl">
+                    <span className="block text-lg md:text-2xl">
                       {category.emoji && !category.emoji.includes("�")
                         ? category.emoji
                         : "🍽️"}
                     </span>
 
-                    <span className="mt-2 block leading-tight">
+                    <span className="mt-1 block leading-tight md:mt-2">
                       {category.name}
                     </span>
                   </button>
@@ -354,7 +369,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
           </section>
 
           <section>
-            <div className="mb-5">
+            <div className="mb-4 text-center">
               <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-200 md:text-sm">
                 Productos
               </p>
@@ -364,17 +379,17 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
               </h2>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 xl:grid-cols-4">
               {activeCategory?.products.map((product) => (
                 <article
                   key={product.id}
-                  className="group overflow-hidden rounded-[1.6rem] bg-white text-[#061a35] shadow-[0_18px_60px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-2 hover:shadow-[0_32px_90px_rgba(0,0,0,0.35)] md:rounded-[2rem]"
+                  className="group overflow-hidden rounded-[1.3rem] bg-white text-[#061a35] shadow-[0_18px_55px_rgba(0,0,0,0.28)] transition duration-300 hover:-translate-y-2 hover:shadow-[0_30px_90px_rgba(0,0,0,0.38)] md:rounded-[2rem]"
                 >
-                  <div className="p-4 md:p-5">
+                  <div className="p-3 md:p-5">
                     <button
                       type="button"
                       onClick={() => openProduct(product)}
-                      className="mb-4 flex h-36 w-full items-center justify-center overflow-hidden rounded-[1.3rem] bg-gradient-to-br from-cyan-50 via-white to-yellow-100 text-6xl transition group-hover:scale-[1.02] md:h-48 md:rounded-[1.7rem] md:text-8xl"
+                      className="mb-3 flex h-24 w-full items-center justify-center overflow-hidden rounded-[1rem] bg-gradient-to-br from-cyan-50 via-white to-yellow-100 text-5xl shadow-inner transition group-hover:scale-[1.02] md:mb-4 md:h-44 md:rounded-[1.7rem] md:text-8xl"
                     >
                       {product.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -388,23 +403,23 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
                       )}
                     </button>
 
-                    <h3 className="text-xl font-black leading-tight md:text-2xl">
+                    <h3 className="line-clamp-2 min-h-10 text-sm font-black leading-tight md:min-h-14 md:text-2xl">
                       {product.name}
                     </h3>
 
-                    <p className="mt-2 min-h-10 text-sm font-medium text-slate-500 md:min-h-12 md:text-base">
+                    <p className="mt-1 line-clamp-2 min-h-8 text-[11px] font-medium text-slate-500 md:mt-2 md:min-h-12 md:text-base">
                       {product.description || "Producto de Andrés Burger."}
                     </p>
 
-                    <div className="mt-5 flex items-center justify-between gap-4">
-                      <span className="text-xl font-black text-blue-700 md:text-2xl">
+                    <div className="mt-3 flex flex-col gap-2 md:mt-5 md:flex-row md:items-center md:justify-between">
+                      <span className="text-lg font-black text-blue-700 md:text-2xl">
                         {formatMoney(product.price)}
                       </span>
 
                       <button
                         type="button"
                         onClick={() => openProduct(product)}
-                        className="rounded-[1.2rem] bg-gradient-to-br from-cyan-300 to-white px-4 py-3 text-sm font-black text-[#061a35] shadow-xl shadow-cyan-300/30 transition hover:scale-105 active:scale-95 md:px-5 md:py-4 md:text-base"
+                        className="rounded-xl bg-gradient-to-br from-yellow-300 via-amber-300 to-orange-300 px-3 py-2 text-xs font-black text-[#061a35] shadow-[0_12px_35px_rgba(251,191,36,0.45)] transition hover:scale-105 active:scale-95 md:rounded-[1.2rem] md:px-5 md:py-4 md:text-base"
                       >
                         Ver producto
                       </button>
@@ -415,22 +430,50 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
             </div>
           </section>
         </div>
-
-        <PublicSocialFooter />
-
-        <button
-          type="button"
-          onClick={() => setIsCartOpen(true)}
-          className="fixed bottom-6 right-6 z-40 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-cyan-200 to-white text-3xl text-[#061a35] shadow-[0_20px_60px_rgba(34,211,238,0.45)] transition hover:scale-110 active:scale-95 md:h-20 md:w-20 md:text-4xl"
-        >
-          🛒
-          {totalItems > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-7 min-w-7 items-center justify-center rounded-full bg-yellow-300 px-2 text-xs font-black text-[#061a35] ring-4 ring-[#061a35] md:h-8 md:min-w-8 md:text-sm">
-              {totalItems}
-            </span>
-          )}
-        </button>
       </section>
+
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#061a35]/95 px-4 py-3 shadow-[0_-18px_55px_rgba(0,0,0,0.35)] backdrop-blur md:hidden">
+        <div className="mx-auto grid max-w-sm grid-cols-2 gap-3">
+          <Link
+            href="/"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm font-black text-white"
+          >
+            <span className="text-xl">🏠</span>
+            Inicio
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setIsCartOpen(true)}
+            className={`relative flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-cyan-200 to-white px-4 py-3 text-sm font-black text-[#061a35] shadow-xl ${
+              cartAnimation ? "cart-pop" : ""
+            }`}
+          >
+            <span className="text-xl">🛒</span>
+            Carrito
+            {totalItems > 0 && (
+              <span className="absolute -right-1 -top-2 flex h-7 min-w-7 items-center justify-center rounded-full bg-yellow-300 px-2 text-xs font-black text-[#061a35] ring-4 ring-[#061a35]">
+                {totalItems}
+              </span>
+            )}
+          </button>
+        </div>
+      </nav>
+
+      <button
+        type="button"
+        onClick={() => setIsCartOpen(true)}
+        className={`fixed bottom-6 right-6 z-40 hidden h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-cyan-200 to-white text-4xl text-[#061a35] shadow-[0_20px_60px_rgba(34,211,238,0.45)] transition hover:scale-110 active:scale-95 md:flex ${
+          cartAnimation ? "cart-pop" : ""
+        }`}
+      >
+        🛒
+        {totalItems > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-8 min-w-8 items-center justify-center rounded-full bg-yellow-300 px-2 text-sm font-black text-[#061a35] ring-4 ring-[#061a35]">
+            {totalItems}
+          </span>
+        )}
+      </button>
 
       {isCartOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 p-0 md:p-6">
@@ -842,7 +885,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
               <button
                 type="button"
                 onClick={addSelectedProductToCart}
-                className="mt-6 w-full rounded-2xl bg-cyan-300 px-5 py-5 text-lg font-black text-[#061a35] shadow-xl shadow-cyan-300/30"
+                className="mt-6 w-full rounded-2xl bg-gradient-to-br from-yellow-300 via-amber-300 to-orange-300 px-5 py-5 text-lg font-black text-[#061a35] shadow-xl shadow-amber-300/40 transition hover:scale-[1.02] active:scale-95"
               >
                 Agregar al carrito
               </button>
