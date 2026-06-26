@@ -52,6 +52,7 @@ export class CategoriesService {
         slug: this.slugify(dto.name),
         emoji: dto.emoji,
         sortOrder: dto.sortOrder || 0,
+        isActive: dto.isActive ?? true,
       },
     });
   }

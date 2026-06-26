@@ -5,20 +5,9 @@ const STATIC_ASSETS = [
   "/menu",
   "/offline",
   "/manifest.json",
-
-  "/icons/icon-72.png",
-  "/icons/icon-96.png",
-  "/icons/icon-128.png",
-  "/icons/icon-144.png",
-  "/icons/icon-152.png",
-  "/icons/icon-192.png",
-  "/icons/icon-384.png",
-  "/icons/icon-512.png",
-  "/icons/maskable-icon-192.png",
-  "/icons/maskable-icon-512.png",
-
-  "/screenshots/wide-home.png",
-  "/screenshots/mobile-home.png",
+  "/icons/icon.svg",
+  "/icons/maskable-icon.svg",
+  "/icons/apple-touch-icon.svg",
 ];
 
 self.addEventListener("install", (event) => {
@@ -54,6 +43,10 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   if (url.pathname.startsWith("/_next/")) {
     event.respondWith(staleWhileRevalidate(request));
     return;
@@ -82,7 +75,18 @@ async function networkFirstNavigation(request) {
       return cachedResponse;
     }
 
-    return caches.match("/offline");
+    const offlineResponse = await caches.match("/offline");
+
+    if (offlineResponse) {
+      return offlineResponse;
+    }
+
+    return new Response("Sin conexión", {
+      status: 503,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+      },
+    });
   }
 }
 
@@ -90,12 +94,20 @@ async function staleWhileRevalidate(request) {
   const cache = await caches.open(CACHE_NAME);
   const cachedResponse = await cache.match(request);
 
-  const fetchPromise = fetch(request)
-    .then((networkResponse) => {
-      cache.put(request, networkResponse.clone());
-      return networkResponse;
-    })
-    .catch(() => cachedResponse);
+  try {
+    const networkResponse = await fetch(request);
+    cache.put(request, networkResponse.clone());
+    return cachedResponse || networkResponse;
+  } catch {
+    if (cachedResponse) {
+      return cachedResponse;
+    }
 
-  return cachedResponse || fetchPromise;
+    return new Response("Sin conexión", {
+      status: 503,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+      },
+    });
+  }
 }
