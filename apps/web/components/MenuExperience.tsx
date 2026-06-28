@@ -597,39 +597,33 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
       </section>
 
       <nav className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+14px)] z-40 flex justify-center px-6 md:hidden">
-        <div className="relative grid h-[76px] w-full max-w-[340px] grid-cols-[1fr_96px_1fr] items-center rounded-[2.4rem] border border-white/25 bg-white/95 px-3 shadow-[0_-10px_45px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-          <button
-            type="button"
-            onClick={scrollToMenuTop}
-            className="flex flex-col items-center justify-center gap-1 rounded-2xl py-2 text-[#061a35] transition active:scale-95"
-            aria-label="Ir al menú"
+        <div className="fixed bottom-4 left-1/2 z-40 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between rounded-[1.7rem] border border-white/20 bg-white/95 px-5 py-3 text-[#061a35] shadow-[0_20px_70px_rgba(0,0,0,0.28)] backdrop-blur md:bottom-6">
+          <Link
+            href="/menu"
+            className="flex min-w-20 flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-black transition hover:bg-cyan-100"
           >
             <span className="text-2xl">🏠</span>
-            <span className="text-[11px] font-black leading-none">Menú</span>
-          </button>
+            <span>Menú</span>
+          </Link>
 
-          <button
-            type="button"
-            onClick={scrollToMenuTop}
-            className="absolute left-1/2 -top-8 flex h-[78px] w-[78px] -translate-x-1/2 items-center justify-center rounded-full border-[6px] border-[#061a35] bg-gradient-to-br from-white via-cyan-100 to-yellow-100 text-4xl shadow-[0_18px_45px_rgba(0,0,0,0.35)] transition active:scale-95"
-            aria-label="Andrés Burger"
+          <Link
+            href="/"
+            className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-[#061a35] bg-white text-4xl shadow-xl transition hover:scale-105"
+            aria-label="Volver al inicio"
           >
             🍔
-          </button>
+          </Link>
 
           <button
             type="button"
             onClick={() => setIsCartOpen(true)}
-            className={`relative flex flex-col items-center justify-center gap-1 rounded-2xl py-2 text-[#061a35] transition active:scale-95 ${
-              cartAnimation ? "cart-pop" : ""
-            }`}
-            aria-label="Abrir carrito"
+            className="relative flex min-w-20 flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-black transition hover:bg-cyan-100"
           >
             <span className="text-2xl">🛒</span>
-            <span className="text-[11px] font-black leading-none">Carrito</span>
+            <span>Carrito</span>
 
             {totalItems > 0 && (
-              <span className="absolute right-4 top-0 flex h-6 min-w-6 items-center justify-center rounded-full bg-yellow-300 px-2 text-[11px] font-black text-[#061a35] ring-4 ring-white">
+              <span className="absolute right-2 top-0 flex h-6 min-w-6 items-center justify-center rounded-full bg-yellow-300 px-1 text-xs font-black text-[#061a35] ring-2 ring-white">
                 {totalItems}
               </span>
             )}
@@ -640,7 +634,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
       <button
         type="button"
         onClick={() => setIsCartOpen(true)}
-        className={`fixed bottom-6 right-6 z-40 hidden h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-cyan-200 to-white text-4xl text-[#061a35] shadow-[0_20px_60px_rgba(34,211,238,0.45)] transition hover:scale-110 active:scale-95 md:flex ${
+        className={`fixed bottom-6 right-6 z-40 hidden h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-cyan-200 to-white text-4xl text-[#061a35] shadow-[0_20px_60px_rgba(34,211,238,0.45)] transition hover:scale-110 active:scale-95 md:flex ${
           cartAnimation ? "cart-pop" : ""
         }`}
       >
@@ -656,7 +650,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 p-0 md:p-6">
           <form
             onSubmit={handleSubmitOrder}
-            className="min-h-screen bg-white text-[#061a35] md:mx-auto md:min-h-0 md:max-w-6xl md:rounded-[2rem] md:shadow-2xl"
+            className="min-h-screen bg-white text-[#061a35] md:mx-auto md:min-h-0 md:max-w-6xl md:rounded-4xl md:shadow-2xl"
           >
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 p-4 pt-[calc(env(safe-area-inset-top)+16px)] backdrop-blur md:p-5">
               <div>
