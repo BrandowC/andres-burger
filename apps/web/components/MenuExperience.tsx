@@ -40,6 +40,22 @@ type ReverseGeocodeResponse = {
   };
 };
 
+type BigDataCloudResponse = {
+  locality?: string;
+  city?: string;
+  principalSubdivision?: string;
+  localityInfo?: {
+    informative?: Array<{
+      name?: string;
+      description?: string;
+    }>;
+    administrative?: Array<{
+      name?: string;
+      description?: string;
+    }>;
+  };
+};
+
 export function MenuExperience({ menu }: MenuExperienceProps) {
   const firstCategoryId = menu.categories[0]?.id || "";
 
@@ -114,6 +130,40 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
     return "🍽️";
   }
 
+  function normalizeText(value: string) {
+    return value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+  }
+
+  function isBadNeighborhood(value?: string) {
+    if (!value) return true;
+
+    const normalized = normalizeText(value);
+
+    return (
+      normalized.includes("comuna") ||
+      normalized.includes("municipio") ||
+      normalized.includes("ciudad") ||
+      normalized.includes("localidad") ||
+      normalized.includes("province") ||
+      normalized.includes("department") ||
+      normalized.includes("colombia") ||
+      normalized.length < 3
+    );
+  }
+
+  function cleanAddressPart(value?: string) {
+    if (!value) return "";
+
+    return value
+      .replace(/,\s*Colombia/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
   function openProduct(product: Product) {
     setSelectedProduct(product);
     setSelectedQuantity(1);
@@ -175,6 +225,44 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
     setSelectedProduct(null);
   }
 
+  async function getNeighborhoodFromBigDataCloud(lat: number, lon: number) {
+    try {
+      const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=es`;
+      const response = await fetch(url);
+
+      if (!response.ok) return "";
+
+      const data = (await response.json()) as BigDataCloudResponse;
+
+      const candidates = [
+        ...(data.localityInfo?.informative || []).map(
+          (item) => item.name || "",
+        ),
+        ...(data.localityInfo?.administrative || []).map(
+          (item) => item.name || "",
+        ),
+        data.locality || "",
+        data.city || "",
+      ];
+
+      const validCandidate = candidates.find((candidate) => {
+        const normalized = normalizeText(candidate);
+
+        return (
+          candidate &&
+          !isBadNeighborhood(candidate) &&
+          !normalized.includes("huila") &&
+          !normalized.includes("neiva") &&
+          !normalized.includes("colombia")
+        );
+      });
+
+      return validCandidate || "";
+    } catch {
+      return "";
+    }
+  }
+
   async function reverseGeocode(lat: number, lon: number, accuracy?: number) {
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=es`;
 
@@ -191,51 +279,74 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
 
     const houseNumber = data.address?.house_number || "";
 
-    const detectedAddress = road
-      ? houseNumber
-        ? `${road} # ${houseNumber}`
-        : road
-      : data.display_name?.split(",").slice(0, 2).join(",").trim() || "";
+    const fallbackAddress =
+      data.display_name?.split(",").slice(0, 2).join(",").trim() || "";
 
-    const possibleNeighborhood =
+    const detectedAddress = cleanAddressPart(
+      road
+        ? houseNumber
+          ? `${road} # ${houseNumber}`
+          : road
+        : fallbackAddress,
+    );
+
+    const nominatimNeighborhood =
       data.address?.neighbourhood ||
       data.address?.suburb ||
       data.address?.quarter ||
       "";
 
-    const invalidNeighborhood =
-      !possibleNeighborhood ||
-      possibleNeighborhood.toLowerCase().includes("comuna") ||
-      possibleNeighborhood.toLowerCase().includes("municipio") ||
-      possibleNeighborhood.toLowerCase().includes("ciudad");
+    const secondaryNeighborhood = await getNeighborhoodFromBigDataCloud(
+      lat,
+      lon,
+    );
+
+    const detectedNeighborhood = !isBadNeighborhood(nominatimNeighborhood)
+      ? nominatimNeighborhood
+      : secondaryNeighborhood;
+
+    const roundedAccuracy = accuracy ? Math.round(accuracy) : null;
+    const hasOnlyStreetWithoutNumber = Boolean(road && !houseNumber);
 
     if (detectedAddress) {
       setAddress(detectedAddress);
     }
 
-    if (!invalidNeighborhood) {
-      setNeighborhood(possibleNeighborhood);
+    if (!isBadNeighborhood(detectedNeighborhood)) {
+      setNeighborhood(detectedNeighborhood);
     } else {
       setNeighborhood("");
     }
 
-    const roundedAccuracy = accuracy ? Math.round(accuracy) : null;
-
     if (roundedAccuracy && roundedAccuracy > 80) {
       setGpsStatus(
-        `Ubicación detectada, pero la precisión es aproximada (${roundedAccuracy} m). Revisa dirección y escribe el barrio manualmente si hace falta.`,
+        `Ubicación aproximada (${roundedAccuracy} m). Revisa la dirección y completa el número de casa/apto y el barrio.`,
       );
       return;
     }
 
-    if (!detectedAddress && invalidNeighborhood) {
+    if (hasOnlyStreetWithoutNumber && isBadNeighborhood(detectedNeighborhood)) {
       setGpsStatus(
-        "Ubicación capturada, pero no se pudo detectar dirección ni barrio exactos. Escríbelos manualmente.",
+        "Solo se detectó la calle. Completa el número de dirección y escribe el barrio manualmente.",
       );
       return;
     }
 
-    if (invalidNeighborhood) {
+    if (hasOnlyStreetWithoutNumber) {
+      setGpsStatus(
+        "Se detectó la calle, pero falta el número exacto. Completa la dirección antes de enviar.",
+      );
+      return;
+    }
+
+    if (!detectedAddress && isBadNeighborhood(detectedNeighborhood)) {
+      setGpsStatus(
+        "No se pudo detectar dirección ni barrio exactos. Escríbelos manualmente.",
+      );
+      return;
+    }
+
+    if (isBadNeighborhood(detectedNeighborhood)) {
       setGpsStatus(
         "Dirección detectada. No se detectó barrio exacto, escríbelo manualmente.",
       );
@@ -274,7 +385,8 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000,
+        maximumAge: 0,
       },
     );
   }
@@ -351,7 +463,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-gradient-to-br from-[#061a35] via-[#0A3670] to-[#061a35] pb-32 text-white">
+    <main className="min-h-screen overflow-x-hidden bg-gradient-to-br from-[#061a35] via-[#0A3670] to-[#061a35] pb-[calc(env(safe-area-inset-bottom)+150px)] text-white">
       {flyingEmoji && (
         <div className="fly-to-cart pointer-events-none fixed left-1/2 top-1/2 z-[80] flex h-16 w-16 items-center justify-center rounded-full bg-white text-4xl shadow-2xl">
           {flyingEmoji}
@@ -360,7 +472,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
 
       <section
         id="client-menu-top"
-        className="relative px-3 pb-8 pt-4 md:px-5 md:pt-6"
+        className="relative px-3 pb-8 pt-[calc(env(safe-area-inset-top)+18px)] md:px-5 md:pt-6"
       >
         <div className="absolute -right-28 top-10 h-96 w-96 rounded-full bg-cyan-300/20 blur-3xl" />
         <div className="absolute -left-28 top-72 h-96 w-96 rounded-full bg-yellow-200/10 blur-3xl" />
@@ -471,7 +583,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
                       <button
                         type="button"
                         onClick={() => openProduct(product)}
-                        className="rounded-xl bg-gradient-to-br from-yellow-300 via-amber-300 to-orange-300 px-3 py-2 text-xs font-black text-[#061a35] shadow-[0_12px_35px_rgba(251,191,36,0.45)] transition hover:scale-105 active:scale-95 md:rounded-[1.2rem] md:px-5 md:py-4 md:text-base"
+                        className="rounded-[1.2rem] bg-linear-to-br from-blue-500 to-cyan-300 px-4 py-3 text-sm font-black text-white shadow-xl shadow-blue-500/30 transition hover:scale-105 hover:shadow-cyan-300/40 active:scale-95 md:px-5 md:py-4 md:text-base"
                       >
                         Ver producto
                       </button>
@@ -484,8 +596,8 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
         </div>
       </section>
 
-      <nav className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-5 md:hidden">
-        <div className="relative grid h-[72px] w-full max-w-sm grid-cols-[1fr_92px_1fr] items-center rounded-[2.2rem] border border-white/20 bg-white/90 px-3 shadow-[0_-10px_45px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+      <nav className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+14px)] z-40 flex justify-center px-6 md:hidden">
+        <div className="relative grid h-[76px] w-full max-w-[340px] grid-cols-[1fr_96px_1fr] items-center rounded-[2.4rem] border border-white/25 bg-white/95 px-3 shadow-[0_-10px_45px_rgba(0,0,0,0.35)] backdrop-blur-xl">
           <button
             type="button"
             onClick={scrollToMenuTop}
@@ -499,7 +611,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
           <button
             type="button"
             onClick={scrollToMenuTop}
-            className="absolute left-1/2 -top-9 flex h-[82px] w-[82px] -translate-x-1/2 items-center justify-center rounded-full border-[6px] border-[#061a35] bg-gradient-to-br from-white via-cyan-100 to-yellow-100 text-4xl shadow-[0_18px_45px_rgba(0,0,0,0.35)] transition active:scale-95"
+            className="absolute left-1/2 -top-8 flex h-[78px] w-[78px] -translate-x-1/2 items-center justify-center rounded-full border-[6px] border-[#061a35] bg-gradient-to-br from-white via-cyan-100 to-yellow-100 text-4xl shadow-[0_18px_45px_rgba(0,0,0,0.35)] transition active:scale-95"
             aria-label="Andrés Burger"
           >
             🍔
@@ -546,7 +658,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
             onSubmit={handleSubmitOrder}
             className="min-h-screen bg-white text-[#061a35] md:mx-auto md:min-h-0 md:max-w-6xl md:rounded-[2rem] md:shadow-2xl"
           >
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 p-4 backdrop-blur md:p-5">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 p-4 pt-[calc(env(safe-area-inset-top)+16px)] backdrop-blur md:p-5">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-700 md:text-sm">
                   Tu pedido
@@ -566,7 +678,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
               </button>
             </div>
 
-            <div className="grid gap-5 p-4 md:p-5 lg:grid-cols-[1fr_420px]">
+            <div className="grid gap-5 p-4 pb-[calc(env(safe-area-inset-bottom)+120px)] md:p-5 lg:grid-cols-[1fr_420px]">
               <section className="space-y-4">
                 {items.length === 0 ? (
                   <div className="rounded-[2rem] bg-slate-50 p-8 text-center md:p-10">
@@ -727,7 +839,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
                       <input
                         value={address}
                         onChange={(event) => setAddress(event.target.value)}
-                        placeholder="Dirección"
+                        placeholder="Dirección completa. Ej: Calle 8 # 32-70"
                         className="w-full rounded-2xl border border-white/10 bg-white p-4 text-[#061a35] outline-none focus:border-cyan-300"
                       />
 
@@ -736,7 +848,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
                         onChange={(event) =>
                           setNeighborhood(event.target.value)
                         }
-                        placeholder="Barrio"
+                        placeholder="Barrio. Ej: Prado Alto / Las Brisas"
                         className="w-full rounded-2xl border border-white/10 bg-white p-4 text-[#061a35] outline-none focus:border-cyan-300"
                       />
 
@@ -817,7 +929,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
       {selectedProduct && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 p-0 md:p-6">
           <div className="min-h-screen bg-white text-[#061a35] md:mx-auto md:min-h-0 md:max-w-2xl md:rounded-[2rem] md:shadow-2xl">
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 p-4 backdrop-blur md:p-5">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 p-4 pt-[calc(env(safe-area-inset-top)+16px)] backdrop-blur md:p-5">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-700 md:text-sm">
                   Producto
@@ -837,7 +949,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
               </button>
             </div>
 
-            <div className="p-4 md:p-5">
+            <div className="p-4 pb-[calc(env(safe-area-inset-bottom)+40px)] md:p-5">
               <div className="flex h-52 items-center justify-center overflow-hidden rounded-[1.6rem] bg-gradient-to-br from-cyan-50 via-white to-yellow-100 text-7xl md:h-64 md:rounded-[2rem] md:text-8xl">
                 {selectedProduct.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -950,7 +1062,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
               <button
                 type="button"
                 onClick={addSelectedProductToCart}
-                className="mt-6 w-full rounded-2xl bg-gradient-to-br from-yellow-300 via-amber-300 to-orange-300 px-5 py-5 text-lg font-black text-[#061a35] shadow-xl shadow-amber-300/40 transition hover:scale-[1.02] active:scale-95"
+                className="mt-6 w-full rounded-2xl bg-gradient-to-br from-cyan-300 via-sky-300 to-blue-300 px-5 py-5 text-lg font-black text-[#061a35] shadow-xl shadow-sky-300/40 transition hover:scale-[1.02] active:scale-95"
               >
                 Agregar al carrito
               </button>
