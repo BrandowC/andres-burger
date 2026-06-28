@@ -1,7 +1,13 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { apiGet, apiPatch, apiPost, apiUploadImage } from "@/lib/api";
+import {
+  apiGet,
+  apiPatch,
+  apiPost,
+  apiUploadImage,
+  apiDelete,
+} from "@/lib/api";
 import { formatMoney } from "@/lib/money";
 import { AdminCategory, AdminProduct } from "@/types/admin-catalog";
 
@@ -199,15 +205,17 @@ export function AdminCatalogManager() {
 
   async function deleteCategory(category: AdminCategory) {
     const confirmDelete = window.confirm(
-      `¿Quieres eliminar/desactivar la categoría "${category.name}"?`,
+      `¿Seguro que quieres eliminar definitivamente la categoría "${category.name}"? Si tiene productos, también se eliminarán del catálogo. Los pedidos históricos no se borran.`,
     );
 
     if (!confirmDelete) return;
 
     try {
-      await apiPatch(`/categories/${category.id}`, {
-        isActive: false,
-      });
+      await apiDelete(`/categories/${category.id}`);
+
+      if (selectedCatalogCategoryId === category.id) {
+        setSelectedCatalogCategoryId("all");
+      }
 
       await loadData();
     } catch (error) {
@@ -233,16 +241,13 @@ export function AdminCatalogManager() {
 
   async function deleteProduct(product: AdminProduct) {
     const confirmDelete = window.confirm(
-      `¿Quieres eliminar/desactivar el producto "${product.name}"?`,
+      `¿Seguro que quieres eliminar definitivamente el producto "${product.name}"? Los pedidos históricos no se borran.`,
     );
 
     if (!confirmDelete) return;
 
     try {
-      await apiPatch(`/products/${product.id}`, {
-        isAvailable: false,
-      });
-
+      await apiDelete(`/products/${product.id}`);
       await loadData();
     } catch (error) {
       console.error(error);

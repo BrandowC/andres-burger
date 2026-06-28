@@ -25,11 +25,18 @@ type ReverseGeocodeResponse = {
   display_name?: string;
   address?: {
     road?: string;
+    pedestrian?: string;
+    residential?: string;
+    footway?: string;
+    path?: string;
     house_number?: string;
     suburb?: string;
     neighbourhood?: string;
     city_district?: string;
     quarter?: string;
+    city?: string;
+    town?: string;
+    village?: string;
   };
 };
 
@@ -73,6 +80,12 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
   const [longitude, setLongitude] = useState<number | undefined>();
   const [gpsStatus, setGpsStatus] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function scrollToMenuTop() {
+    document
+      .getElementById("client-menu-top")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   const activeCategory = useMemo(() => {
     return menu.categories.find((category) => category.id === activeCategoryId);
@@ -162,33 +175,69 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
     setSelectedProduct(null);
   }
 
-  async function reverseGeocode(lat: number, lon: number) {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=es`;
+  async function reverseGeocode(lat: number, lon: number, accuracy?: number) {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=es`;
 
     const response = await fetch(url);
     const data = (await response.json()) as ReverseGeocodeResponse;
 
-    const road = data.address?.road || "";
+    const road =
+      data.address?.road ||
+      data.address?.pedestrian ||
+      data.address?.residential ||
+      data.address?.footway ||
+      data.address?.path ||
+      "";
+
     const houseNumber = data.address?.house_number || "";
 
-    const fullAddress =
-      road || houseNumber
-        ? `${road} ${houseNumber}`.trim()
-        : data.display_name || "";
+    const detectedAddress = road
+      ? houseNumber
+        ? `${road} # ${houseNumber}`
+        : road
+      : data.display_name?.split(",").slice(0, 2).join(",").trim() || "";
 
-    const detectedNeighborhood =
-      data.address?.suburb ||
+    const possibleNeighborhood =
       data.address?.neighbourhood ||
-      data.address?.city_district ||
+      data.address?.suburb ||
       data.address?.quarter ||
       "";
 
-    if (fullAddress) setAddress(fullAddress);
-    if (detectedNeighborhood) setNeighborhood(detectedNeighborhood);
+    const invalidNeighborhood =
+      !possibleNeighborhood ||
+      possibleNeighborhood.toLowerCase().includes("comuna") ||
+      possibleNeighborhood.toLowerCase().includes("municipio") ||
+      possibleNeighborhood.toLowerCase().includes("ciudad");
 
-    if (!fullAddress && !detectedNeighborhood) {
+    if (detectedAddress) {
+      setAddress(detectedAddress);
+    }
+
+    if (!invalidNeighborhood) {
+      setNeighborhood(possibleNeighborhood);
+    } else {
+      setNeighborhood("");
+    }
+
+    const roundedAccuracy = accuracy ? Math.round(accuracy) : null;
+
+    if (roundedAccuracy && roundedAccuracy > 80) {
       setGpsStatus(
-        "Ubicación capturada, pero no se pudo detectar dirección exacta. Escríbela manualmente.",
+        `Ubicación detectada, pero la precisión es aproximada (${roundedAccuracy} m). Revisa dirección y escribe el barrio manualmente si hace falta.`,
+      );
+      return;
+    }
+
+    if (!detectedAddress && invalidNeighborhood) {
+      setGpsStatus(
+        "Ubicación capturada, pero no se pudo detectar dirección ni barrio exactos. Escríbelos manualmente.",
+      );
+      return;
+    }
+
+    if (invalidNeighborhood) {
+      setGpsStatus(
+        "Dirección detectada. No se detectó barrio exacto, escríbelo manualmente.",
       );
       return;
     }
@@ -213,7 +262,7 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
         setLongitude(lon);
 
         try {
-          await reverseGeocode(lat, lon);
+          await reverseGeocode(lat, lon, position.coords.accuracy);
         } catch {
           setGpsStatus(
             "Ubicación capturada, pero no se pudo convertir en dirección. Escríbela manualmente.",
@@ -302,14 +351,17 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-gradient-to-br from-[#061a35] via-[#0A3670] to-[#061a35] pb-24 text-white">
+    <main className="min-h-screen overflow-x-hidden bg-gradient-to-br from-[#061a35] via-[#0A3670] to-[#061a35] pb-32 text-white">
       {flyingEmoji && (
         <div className="fly-to-cart pointer-events-none fixed left-1/2 top-1/2 z-[80] flex h-16 w-16 items-center justify-center rounded-full bg-white text-4xl shadow-2xl">
           {flyingEmoji}
         </div>
       )}
 
-      <section className="relative px-3 pb-8 pt-4 md:px-5 md:pt-6">
+      <section
+        id="client-menu-top"
+        className="relative px-3 pb-8 pt-4 md:px-5 md:pt-6"
+      >
         <div className="absolute -right-28 top-10 h-96 w-96 rounded-full bg-cyan-300/20 blur-3xl" />
         <div className="absolute -left-28 top-72 h-96 w-96 rounded-full bg-yellow-200/10 blur-3xl" />
 
@@ -432,27 +484,40 @@ export function MenuExperience({ menu }: MenuExperienceProps) {
         </div>
       </section>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#061a35]/95 px-4 py-3 shadow-[0_-18px_55px_rgba(0,0,0,0.35)] backdrop-blur md:hidden">
-        <div className="mx-auto grid max-w-sm grid-cols-2 gap-3">
-          <Link
-            href="/"
-            className="flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm font-black text-white"
+      <nav className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-5 md:hidden">
+        <div className="relative grid h-[72px] w-full max-w-sm grid-cols-[1fr_92px_1fr] items-center rounded-[2.2rem] border border-white/20 bg-white/90 px-3 shadow-[0_-10px_45px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+          <button
+            type="button"
+            onClick={scrollToMenuTop}
+            className="flex flex-col items-center justify-center gap-1 rounded-2xl py-2 text-[#061a35] transition active:scale-95"
+            aria-label="Ir al menú"
           >
-            <span className="text-xl">🏠</span>
-            Inicio
-          </Link>
+            <span className="text-2xl">🏠</span>
+            <span className="text-[11px] font-black leading-none">Menú</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={scrollToMenuTop}
+            className="absolute left-1/2 -top-9 flex h-[82px] w-[82px] -translate-x-1/2 items-center justify-center rounded-full border-[6px] border-[#061a35] bg-gradient-to-br from-white via-cyan-100 to-yellow-100 text-4xl shadow-[0_18px_45px_rgba(0,0,0,0.35)] transition active:scale-95"
+            aria-label="Andrés Burger"
+          >
+            🍔
+          </button>
 
           <button
             type="button"
             onClick={() => setIsCartOpen(true)}
-            className={`relative flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-cyan-200 to-white px-4 py-3 text-sm font-black text-[#061a35] shadow-xl ${
+            className={`relative flex flex-col items-center justify-center gap-1 rounded-2xl py-2 text-[#061a35] transition active:scale-95 ${
               cartAnimation ? "cart-pop" : ""
             }`}
+            aria-label="Abrir carrito"
           >
-            <span className="text-xl">🛒</span>
-            Carrito
+            <span className="text-2xl">🛒</span>
+            <span className="text-[11px] font-black leading-none">Carrito</span>
+
             {totalItems > 0 && (
-              <span className="absolute -right-1 -top-2 flex h-7 min-w-7 items-center justify-center rounded-full bg-yellow-300 px-2 text-xs font-black text-[#061a35] ring-4 ring-[#061a35]">
+              <span className="absolute right-4 top-0 flex h-6 min-w-6 items-center justify-center rounded-full bg-yellow-300 px-2 text-[11px] font-black text-[#061a35] ring-4 ring-white">
                 {totalItems}
               </span>
             )}

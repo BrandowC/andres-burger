@@ -2,12 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  closestCenter,
   DndContext,
   DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
   PointerSensor,
   TouchSensor,
-  useDroppable,
   useDraggable,
+  useDroppable,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -42,11 +45,17 @@ const columns: {
   },
 ];
 
+function getColumnTitle(status: AdminOrderStatus) {
+  return columns.find((column) => column.status === status)?.title || status;
+}
+
 function DroppableColumn({
   column,
+  count,
   children,
 }: {
   column: (typeof columns)[number];
+  count: number;
   children: React.ReactNode;
 }) {
   const { setNodeRef, isOver } = useDroppable({
@@ -56,8 +65,10 @@ function DroppableColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`min-w-[290px] flex-1 rounded-[2rem] border border-white/10 bg-white/10 p-4 backdrop-blur transition ${
-        isOver ? "ring-4 ring-cyan-300/50" : ""
+      className={`min-w-[290px] flex-1 rounded-[2rem] border p-4 backdrop-blur transition-all duration-200 ${
+        isOver
+          ? "border-cyan-300 bg-cyan-300/15 ring-4 ring-cyan-300/30"
+          : "border-white/10 bg-white/10"
       }`}
     >
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -65,10 +76,84 @@ function DroppableColumn({
           <div className={`mb-2 h-2 w-12 rounded-full ${column.color}`} />
           <h2 className="text-lg font-black text-white">{column.title}</h2>
         </div>
+
+        <span className="flex h-9 min-w-9 items-center justify-center rounded-full bg-white px-3 text-sm font-black text-[#061a35]">
+          {count}
+        </span>
       </div>
 
-      <div className="space-y-3">{children}</div>
+      <div className="min-h-[180px] space-y-3">
+        {children}
+
+        {count === 0 && (
+          <div className="rounded-[1.5rem] border border-dashed border-white/20 p-5 text-center text-sm font-semibold text-blue-100">
+            Arrastra pedidos aquí
+          </div>
+        )}
+      </div>
     </div>
+  );
+}
+
+function OrderCard({
+  order,
+  onView,
+  dragging = false,
+}: {
+  order: AdminOrder;
+  onView?: (order: AdminOrder) => void;
+  dragging?: boolean;
+}) {
+  return (
+    <article
+      className={`rounded-[1.5rem] bg-white p-4 text-[#061a35] shadow-xl transition ${
+        dragging ? "scale-[1.03] ring-4 ring-cyan-300" : ""
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">
+            {order.orderCode}
+          </p>
+
+          <h3 className="mt-1 text-lg font-black">{order.customerName}</h3>
+
+          <p className="text-sm text-slate-500">📱 {order.customerPhone}</p>
+        </div>
+
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black">
+          {order.deliveryType === "DELIVERY" ? "Domicilio" : "Recoger"}
+        </span>
+      </div>
+
+      <div className="mt-3 space-y-1 text-sm">
+        {order.items.slice(0, 4).map((item) => (
+          <p key={item.id}>
+            {item.quantity} {item.productNameSnapshot}
+          </p>
+        ))}
+
+        {order.items.length > 4 && (
+          <p className="text-slate-500">+ {order.items.length - 4} más</p>
+        )}
+      </div>
+
+      <div className="mt-4 flex items-center justify-between">
+        <span className="font-black text-blue-700">
+          {formatMoney(order.subtotal)}
+        </span>
+
+        {onView && (
+          <button
+            type="button"
+            onClick={() => onView(order)}
+            className="rounded-xl bg-[#061a35] px-4 py-2 text-sm font-black text-white"
+          >
+            Ver
+          </button>
+        )}
+      </div>
+    </article>
   );
 }
 
@@ -82,6 +167,9 @@ function DraggableOrderCard({
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: order.id,
+      data: {
+        order,
+      },
     });
 
   const style = transform
@@ -91,11 +179,11 @@ function DraggableOrderCard({
     : undefined;
 
   return (
-    <article
+    <div
       ref={setNodeRef}
       style={style}
-      className={`rounded-[1.5rem] bg-white p-4 text-[#061a35] shadow-xl transition ${
-        isDragging ? "z-50 opacity-80 ring-4 ring-cyan-300" : ""
+      className={`touch-none transition-opacity ${
+        isDragging ? "opacity-30" : "opacity-100"
       }`}
     >
       <div
@@ -103,49 +191,9 @@ function DraggableOrderCard({
         {...attributes}
         className="cursor-grab active:cursor-grabbing"
       >
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">
-              {order.orderCode}
-            </p>
-
-            <h3 className="mt-1 text-lg font-black">{order.customerName}</h3>
-
-            <p className="text-sm text-slate-500">📱 {order.customerPhone}</p>
-          </div>
-
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black">
-            {order.deliveryType === "DELIVERY" ? "Domicilio" : "Recoger"}
-          </span>
-        </div>
-
-        <div className="mt-3 space-y-1 text-sm">
-          {order.items.slice(0, 4).map((item) => (
-            <p key={item.id}>
-              {item.quantity} {item.productNameSnapshot}
-            </p>
-          ))}
-
-          {order.items.length > 4 && (
-            <p className="text-slate-500">+ {order.items.length - 4} más</p>
-          )}
-        </div>
+        <OrderCard order={order} onView={onView} />
       </div>
-
-      <div className="mt-4 flex items-center justify-between">
-        <span className="font-black text-blue-700">
-          {formatMoney(order.subtotal)}
-        </span>
-
-        <button
-          type="button"
-          onClick={() => onView(order)}
-          className="rounded-xl bg-[#061a35] px-4 py-2 text-sm font-black text-white"
-        >
-          Ver
-        </button>
-      </div>
-    </article>
+    </div>
   );
 }
 
@@ -153,17 +201,19 @@ export function AdminOrdersKanban() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
+  const [activeOrder, setActiveOrder] = useState<AdminOrder | null>(null);
+  const [dragging, setDragging] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 6,
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 180,
-        tolerance: 6,
+        delay: 120,
+        tolerance: 8,
       },
     }),
   );
@@ -174,7 +224,6 @@ export function AdminOrdersKanban() {
       setOrders(response);
     } catch (error) {
       console.error(error);
-      alert("No se pudieron cargar los pedidos.");
     } finally {
       setLoading(false);
     }
@@ -184,41 +233,70 @@ export function AdminOrdersKanban() {
     loadOrders();
 
     const interval = window.setInterval(() => {
-      loadOrders();
-    }, 10000);
+      if (!dragging) {
+        loadOrders();
+      }
+    }, 15000);
 
     return () => window.clearInterval(interval);
-  }, []);
+  }, [dragging]);
 
-  async function updateStatus(orderId: string, status: AdminOrderStatus) {
-    const updatedOrder = await apiPatch<
-      AdminOrder,
-      { status: AdminOrderStatus }
-    >(`/orders/${orderId}/status`, { status });
+  function handleDragStart(event: DragStartEvent) {
+    const orderId = String(event.active.id);
+    const order = orders.find((item) => item.id === orderId) || null;
 
-    setOrders((currentOrders) =>
-      currentOrders.map((order) =>
-        order.id === updatedOrder.id ? updatedOrder : order,
-      ),
-    );
-
-    if (selectedOrder?.id === updatedOrder.id) {
-      setSelectedOrder(updatedOrder);
-    }
+    setActiveOrder(order);
+    setDragging(true);
   }
 
   async function handleDragEnd(event: DragEndEvent) {
     const orderId = String(event.active.id);
     const newStatus = event.over?.id as AdminOrderStatus | undefined;
 
+    setActiveOrder(null);
+    setDragging(false);
+
     if (!newStatus) return;
 
-    const order = orders.find((item) => item.id === orderId);
+    const currentOrder = orders.find((item) => item.id === orderId);
 
-    if (!order) return;
-    if (order.status === newStatus) return;
+    if (!currentOrder) return;
+    if (currentOrder.status === newStatus) return;
 
-    await updateStatus(orderId, newStatus);
+    const previousOrders = orders;
+
+    setOrders((currentOrders) =>
+      currentOrders.map((order) =>
+        order.id === orderId
+          ? {
+              ...order,
+              status: newStatus,
+            }
+          : order,
+      ),
+    );
+
+    try {
+      const updatedOrder = await apiPatch<
+        AdminOrder,
+        { status: AdminOrderStatus }
+      >(`/orders/${orderId}/status`, { status: newStatus });
+
+      setOrders((currentOrders) =>
+        currentOrders.map((order) =>
+          order.id === updatedOrder.id ? updatedOrder : order,
+        ),
+      );
+    } catch (error) {
+      console.error(error);
+      setOrders(previousOrders);
+      alert("No se pudo cambiar el estado del pedido.");
+    }
+  }
+
+  function handleDragCancel() {
+    setActiveOrder(null);
+    setDragging(false);
   }
 
   const totalToday = useMemo(() => {
@@ -266,7 +344,13 @@ export function AdminOrdersKanban() {
         </div>
       </section>
 
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
         <section className="flex gap-4 overflow-x-auto pb-6">
           {columns.map((column) => {
             const columnOrders = orders.filter(
@@ -274,7 +358,11 @@ export function AdminOrdersKanban() {
             );
 
             return (
-              <DroppableColumn key={column.status} column={column}>
+              <DroppableColumn
+                key={column.status}
+                column={column}
+                count={columnOrders.length}
+              >
                 {columnOrders.map((order) => (
                   <DraggableOrderCard
                     key={order.id}
@@ -286,6 +374,10 @@ export function AdminOrdersKanban() {
             );
           })}
         </section>
+
+        <DragOverlay>
+          {activeOrder ? <OrderCard order={activeOrder} dragging /> : null}
+        </DragOverlay>
       </DndContext>
 
       {selectedOrder && (
@@ -314,6 +406,7 @@ export function AdminOrdersKanban() {
               <section className="rounded-3xl bg-slate-50 p-4">
                 <p className="font-black">Datos del cliente</p>
                 <p>📱 {selectedOrder.customerPhone}</p>
+                <p>Estado: {getColumnTitle(selectedOrder.status)}</p>
                 <p>
                   Entrega:{" "}
                   {selectedOrder.deliveryType === "DELIVERY"

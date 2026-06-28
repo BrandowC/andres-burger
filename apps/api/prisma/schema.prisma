@@ -231,7 +231,7 @@ model OrderItem {
   note                String?
 
   order               Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product             Product?  @relation(fields: [productId], references: [id])
+  product             Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   additions           OrderItemAddition[]
 
@@ -250,7 +250,7 @@ model OrderItemAddition {
   subtotal               Int
 
   orderItem              OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
-  addition               Addition? @relation(fields: [additionId], references: [id])
+  addition               Addition? @relation(fields: [additionId], references: [id], onDelete: SetNull)
 
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
