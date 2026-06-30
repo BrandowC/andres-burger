@@ -92,9 +92,7 @@ export async function apiPatch<TResponse = unknown, TBody = unknown>(
   return response.json() as Promise<TResponse>;
 }
 
-export async function apiDelete<TResponse = unknown>(
-  path: string,
-): Promise<TResponse> {
+export async function apiDelete<TResponse>(path: string): Promise<TResponse> {
   const response = await fetch(`${API_URL}${path}`, {
     method: "DELETE",
     headers: {
@@ -112,7 +110,7 @@ export async function apiDelete<TResponse = unknown>(
     throw new Error(errorText || `Error eliminando ${path}`);
   }
 
-  return response.json() as Promise<TResponse>;
+  return response.json();
 }
 
 export async function apiUploadImage(file: File): Promise<{ url: string }> {

@@ -31,6 +31,7 @@ export class AdditionsService {
     return this.prisma.addition.findMany({
       where: {
         businessId: business.id,
+        deletedAt: null,
       },
       orderBy: {
         name: 'asc',
@@ -57,14 +58,16 @@ export class AdditionsService {
         price: dto.price,
         emoji: dto.emoji,
         isActive: dto.isActive ?? true,
+        deletedAt: null,
       },
     });
   }
 
   async update(id: string, dto: UpdateAdditionDto) {
-    const addition = await this.prisma.addition.findUnique({
+    const addition = await this.prisma.addition.findFirst({
       where: {
         id,
+        deletedAt: null,
       },
     });
 
@@ -87,9 +90,10 @@ export class AdditionsService {
   }
 
   async remove(id: string) {
-    const addition = await this.prisma.addition.findUnique({
+    const addition = await this.prisma.addition.findFirst({
       where: {
         id,
+        deletedAt: null,
       },
     });
 
@@ -104,20 +108,21 @@ export class AdditionsService {
     });
 
     if (usedInOrders > 0) {
-      const disabledAddition = await this.prisma.addition.update({
+      const deletedAddition = await this.prisma.addition.update({
         where: {
           id,
         },
         data: {
           isActive: false,
+          deletedAt: new Date(),
         },
       });
 
       return {
         mode: 'soft-delete',
         message:
-          'La adición ya fue usada en pedidos anteriores, por eso se desactivó en vez de borrarse.',
-        addition: disabledAddition,
+          'La adición ya estaba usada en pedidos anteriores. Se ocultó del sistema sin dañar el historial.',
+        addition: deletedAddition,
       };
     }
 

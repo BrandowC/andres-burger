@@ -110,7 +110,7 @@ model Category {
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  deletedAt DateTime?
+  deletedAt   DateTime?
 
   @@unique([businessId, slug])
 }
@@ -155,10 +155,9 @@ model Addition {
   business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   orderItemAdditions OrderItemAddition[]
-
+  deletedAt   DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  deletedAt DateTime?
 
   @@unique([businessId, slug])
 }

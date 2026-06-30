@@ -172,9 +172,9 @@ export const AdditionScalarFieldEnum = {
   price: 'price',
   emoji: 'emoji',
   isActive: 'isActive',
+  deletedAt: 'deletedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
+  updatedAt: 'updatedAt'
 } as const
 
 export type AdditionScalarFieldEnum = (typeof AdditionScalarFieldEnum)[keyof typeof AdditionScalarFieldEnum]

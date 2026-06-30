@@ -42,9 +42,9 @@ export type AdditionMinAggregateOutputType = {
   price: number | null
   emoji: string | null
   isActive: boolean | null
+  deletedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
-  deletedAt: Date | null
 }
 
 export type AdditionMaxAggregateOutputType = {
@@ -55,9 +55,9 @@ export type AdditionMaxAggregateOutputType = {
   price: number | null
   emoji: string | null
   isActive: boolean | null
+  deletedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
-  deletedAt: Date | null
 }
 
 export type AdditionCountAggregateOutputType = {
@@ -68,9 +68,9 @@ export type AdditionCountAggregateOutputType = {
   price: number
   emoji: number
   isActive: number
+  deletedAt: number
   createdAt: number
   updatedAt: number
-  deletedAt: number
   _all: number
 }
 
@@ -91,9 +91,9 @@ export type AdditionMinAggregateInputType = {
   price?: true
   emoji?: true
   isActive?: true
+  deletedAt?: true
   createdAt?: true
   updatedAt?: true
-  deletedAt?: true
 }
 
 export type AdditionMaxAggregateInputType = {
@@ -104,9 +104,9 @@ export type AdditionMaxAggregateInputType = {
   price?: true
   emoji?: true
   isActive?: true
+  deletedAt?: true
   createdAt?: true
   updatedAt?: true
-  deletedAt?: true
 }
 
 export type AdditionCountAggregateInputType = {
@@ -117,9 +117,9 @@ export type AdditionCountAggregateInputType = {
   price?: true
   emoji?: true
   isActive?: true
+  deletedAt?: true
   createdAt?: true
   updatedAt?: true
-  deletedAt?: true
   _all?: true
 }
 
@@ -217,9 +217,9 @@ export type AdditionGroupByOutputType = {
   price: number
   emoji: string | null
   isActive: boolean
+  deletedAt: Date | null
   createdAt: Date
   updatedAt: Date
-  deletedAt: Date | null
   _count: AdditionCountAggregateOutputType | null
   _avg: AdditionAvgAggregateOutputType | null
   _sum: AdditionSumAggregateOutputType | null
@@ -253,9 +253,9 @@ export type AdditionWhereInput = {
   price?: Prisma.IntFilter<"Addition"> | number
   emoji?: Prisma.StringNullableFilter<"Addition"> | string | null
   isActive?: Prisma.BoolFilter<"Addition"> | boolean
+  deletedAt?: Prisma.DateTimeNullableFilter<"Addition"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Addition"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Addition"> | Date | string
-  deletedAt?: Prisma.DateTimeNullableFilter<"Addition"> | Date | string | null
   business?: Prisma.XOR<Prisma.BusinessScalarRelationFilter, Prisma.BusinessWhereInput>
   orderItemAdditions?: Prisma.OrderItemAdditionListRelationFilter
 }
@@ -268,9 +268,9 @@ export type AdditionOrderByWithRelationInput = {
   price?: Prisma.SortOrder
   emoji?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   business?: Prisma.BusinessOrderByWithRelationInput
   orderItemAdditions?: Prisma.OrderItemAdditionOrderByRelationAggregateInput
 }
@@ -287,9 +287,9 @@ export type AdditionWhereUniqueInput = Prisma.AtLeast<{
   price?: Prisma.IntFilter<"Addition"> | number
   emoji?: Prisma.StringNullableFilter<"Addition"> | string | null
   isActive?: Prisma.BoolFilter<"Addition"> | boolean
+  deletedAt?: Prisma.DateTimeNullableFilter<"Addition"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Addition"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Addition"> | Date | string
-  deletedAt?: Prisma.DateTimeNullableFilter<"Addition"> | Date | string | null
   business?: Prisma.XOR<Prisma.BusinessScalarRelationFilter, Prisma.BusinessWhereInput>
   orderItemAdditions?: Prisma.OrderItemAdditionListRelationFilter
 }, "id" | "businessId_slug">
@@ -302,9 +302,9 @@ export type AdditionOrderByWithAggregationInput = {
   price?: Prisma.SortOrder
   emoji?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.AdditionCountOrderByAggregateInput
   _avg?: Prisma.AdditionAvgOrderByAggregateInput
   _max?: Prisma.AdditionMaxOrderByAggregateInput
@@ -323,9 +323,9 @@ export type AdditionScalarWhereWithAggregatesInput = {
   price?: Prisma.IntWithAggregatesFilter<"Addition"> | number
   emoji?: Prisma.StringNullableWithAggregatesFilter<"Addition"> | string | null
   isActive?: Prisma.BoolWithAggregatesFilter<"Addition"> | boolean
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Addition"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Addition"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Addition"> | Date | string
-  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Addition"> | Date | string | null
 }
 
 export type AdditionCreateInput = {
@@ -335,9 +335,9 @@ export type AdditionCreateInput = {
   price: number
   emoji?: string | null
   isActive?: boolean
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  deletedAt?: Date | string | null
   business: Prisma.BusinessCreateNestedOneWithoutAdditionsInput
   orderItemAdditions?: Prisma.OrderItemAdditionCreateNestedManyWithoutAdditionInput
 }
@@ -350,9 +350,9 @@ export type AdditionUncheckedCreateInput = {
   price: number
   emoji?: string | null
   isActive?: boolean
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  deletedAt?: Date | string | null
   orderItemAdditions?: Prisma.OrderItemAdditionUncheckedCreateNestedManyWithoutAdditionInput
 }
 
@@ -363,9 +363,9 @@ export type AdditionUpdateInput = {
   price?: Prisma.IntFieldUpdateOperationsInput | number
   emoji?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   business?: Prisma.BusinessUpdateOneRequiredWithoutAdditionsNestedInput
   orderItemAdditions?: Prisma.OrderItemAdditionUpdateManyWithoutAdditionNestedInput
 }
@@ -378,9 +378,9 @@ export type AdditionUncheckedUpdateInput = {
   price?: Prisma.IntFieldUpdateOperationsInput | number
   emoji?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   orderItemAdditions?: Prisma.OrderItemAdditionUncheckedUpdateManyWithoutAdditionNestedInput
 }
 
@@ -392,9 +392,9 @@ export type AdditionCreateManyInput = {
   price: number
   emoji?: string | null
   isActive?: boolean
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  deletedAt?: Date | string | null
 }
 
 export type AdditionUpdateManyMutationInput = {
@@ -404,9 +404,9 @@ export type AdditionUpdateManyMutationInput = {
   price?: Prisma.IntFieldUpdateOperationsInput | number
   emoji?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type AdditionUncheckedUpdateManyInput = {
@@ -417,9 +417,9 @@ export type AdditionUncheckedUpdateManyInput = {
   price?: Prisma.IntFieldUpdateOperationsInput | number
   emoji?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type AdditionListRelationFilter = {
@@ -445,9 +445,9 @@ export type AdditionCountOrderByAggregateInput = {
   price?: Prisma.SortOrder
   emoji?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  deletedAt?: Prisma.SortOrder
 }
 
 export type AdditionAvgOrderByAggregateInput = {
@@ -462,9 +462,9 @@ export type AdditionMaxOrderByAggregateInput = {
   price?: Prisma.SortOrder
   emoji?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  deletedAt?: Prisma.SortOrder
 }
 
 export type AdditionMinOrderByAggregateInput = {
@@ -475,9 +475,9 @@ export type AdditionMinOrderByAggregateInput = {
   price?: Prisma.SortOrder
   emoji?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  deletedAt?: Prisma.SortOrder
 }
 
 export type AdditionSumOrderByAggregateInput = {
@@ -554,9 +554,9 @@ export type AdditionCreateWithoutBusinessInput = {
   price: number
   emoji?: string | null
   isActive?: boolean
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  deletedAt?: Date | string | null
   orderItemAdditions?: Prisma.OrderItemAdditionCreateNestedManyWithoutAdditionInput
 }
 
@@ -567,9 +567,9 @@ export type AdditionUncheckedCreateWithoutBusinessInput = {
   price: number
   emoji?: string | null
   isActive?: boolean
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  deletedAt?: Date | string | null
   orderItemAdditions?: Prisma.OrderItemAdditionUncheckedCreateNestedManyWithoutAdditionInput
 }
 
@@ -610,9 +610,9 @@ export type AdditionScalarWhereInput = {
   price?: Prisma.IntFilter<"Addition"> | number
   emoji?: Prisma.StringNullableFilter<"Addition"> | string | null
   isActive?: Prisma.BoolFilter<"Addition"> | boolean
+  deletedAt?: Prisma.DateTimeNullableFilter<"Addition"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Addition"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Addition"> | Date | string
-  deletedAt?: Prisma.DateTimeNullableFilter<"Addition"> | Date | string | null
 }
 
 export type AdditionCreateWithoutOrderItemAdditionsInput = {
@@ -622,9 +622,9 @@ export type AdditionCreateWithoutOrderItemAdditionsInput = {
   price: number
   emoji?: string | null
   isActive?: boolean
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  deletedAt?: Date | string | null
   business: Prisma.BusinessCreateNestedOneWithoutAdditionsInput
 }
 
@@ -636,9 +636,9 @@ export type AdditionUncheckedCreateWithoutOrderItemAdditionsInput = {
   price: number
   emoji?: string | null
   isActive?: boolean
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  deletedAt?: Date | string | null
 }
 
 export type AdditionCreateOrConnectWithoutOrderItemAdditionsInput = {
@@ -664,9 +664,9 @@ export type AdditionUpdateWithoutOrderItemAdditionsInput = {
   price?: Prisma.IntFieldUpdateOperationsInput | number
   emoji?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   business?: Prisma.BusinessUpdateOneRequiredWithoutAdditionsNestedInput
 }
 
@@ -678,9 +678,9 @@ export type AdditionUncheckedUpdateWithoutOrderItemAdditionsInput = {
   price?: Prisma.IntFieldUpdateOperationsInput | number
   emoji?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type AdditionCreateManyBusinessInput = {
@@ -690,9 +690,9 @@ export type AdditionCreateManyBusinessInput = {
   price: number
   emoji?: string | null
   isActive?: boolean
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  deletedAt?: Date | string | null
 }
 
 export type AdditionUpdateWithoutBusinessInput = {
@@ -702,9 +702,9 @@ export type AdditionUpdateWithoutBusinessInput = {
   price?: Prisma.IntFieldUpdateOperationsInput | number
   emoji?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   orderItemAdditions?: Prisma.OrderItemAdditionUpdateManyWithoutAdditionNestedInput
 }
 
@@ -715,9 +715,9 @@ export type AdditionUncheckedUpdateWithoutBusinessInput = {
   price?: Prisma.IntFieldUpdateOperationsInput | number
   emoji?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   orderItemAdditions?: Prisma.OrderItemAdditionUncheckedUpdateManyWithoutAdditionNestedInput
 }
 
@@ -728,9 +728,9 @@ export type AdditionUncheckedUpdateManyWithoutBusinessInput = {
   price?: Prisma.IntFieldUpdateOperationsInput | number
   emoji?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -772,9 +772,9 @@ export type AdditionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   price?: boolean
   emoji?: boolean
   isActive?: boolean
+  deletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  deletedAt?: boolean
   business?: boolean | Prisma.BusinessDefaultArgs<ExtArgs>
   orderItemAdditions?: boolean | Prisma.Addition$orderItemAdditionsArgs<ExtArgs>
   _count?: boolean | Prisma.AdditionCountOutputTypeDefaultArgs<ExtArgs>
@@ -788,9 +788,9 @@ export type AdditionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   price?: boolean
   emoji?: boolean
   isActive?: boolean
+  deletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  deletedAt?: boolean
   business?: boolean | Prisma.BusinessDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["addition"]>
 
@@ -802,9 +802,9 @@ export type AdditionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   price?: boolean
   emoji?: boolean
   isActive?: boolean
+  deletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  deletedAt?: boolean
   business?: boolean | Prisma.BusinessDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["addition"]>
 
@@ -816,12 +816,12 @@ export type AdditionSelectScalar = {
   price?: boolean
   emoji?: boolean
   isActive?: boolean
+  deletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  deletedAt?: boolean
 }
 
-export type AdditionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "businessId" | "name" | "slug" | "price" | "emoji" | "isActive" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["addition"]>
+export type AdditionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "businessId" | "name" | "slug" | "price" | "emoji" | "isActive" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["addition"]>
 export type AdditionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   business?: boolean | Prisma.BusinessDefaultArgs<ExtArgs>
   orderItemAdditions?: boolean | Prisma.Addition$orderItemAdditionsArgs<ExtArgs>
@@ -848,9 +848,9 @@ export type $AdditionPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     price: number
     emoji: string | null
     isActive: boolean
+    deletedAt: Date | null
     createdAt: Date
     updatedAt: Date
-    deletedAt: Date | null
   }, ExtArgs["result"]["addition"]>
   composites: {}
 }
@@ -1283,9 +1283,9 @@ export interface AdditionFieldRefs {
   readonly price: Prisma.FieldRef<"Addition", 'Int'>
   readonly emoji: Prisma.FieldRef<"Addition", 'String'>
   readonly isActive: Prisma.FieldRef<"Addition", 'Boolean'>
+  readonly deletedAt: Prisma.FieldRef<"Addition", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Addition", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Addition", 'DateTime'>
-  readonly deletedAt: Prisma.FieldRef<"Addition", 'DateTime'>
 }
     
 

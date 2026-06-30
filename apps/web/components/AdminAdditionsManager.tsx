@@ -121,11 +121,18 @@ export function AdminAdditionsManager() {
     if (!confirmed) return;
 
     try {
-      await apiDelete(`/additions/${addition.id}`);
+      const response = await apiDelete<{
+        mode: string;
+        message: string;
+        addition: AdminAddition;
+      }>(`/additions/${addition.id}`);
+
       await loadAdditions();
+
+      alert(response.message);
     } catch (error) {
       console.error(error);
-      alert("No se pudo eliminar la adición.");
+      alert("No se pudo eliminar la adición. Revisa consola y backend.");
     }
   }
 
