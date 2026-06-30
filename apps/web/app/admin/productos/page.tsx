@@ -7,7 +7,7 @@ import { InstallPWAButton } from "@/components/InstallPWAButton";
 export default function AdminProductsPage() {
   return (
     <AdminGuard>
-      <main className="min-h-screen bg-gradient-to-br from-[#061a35] via-[#0A3670] to-[#061a35] px-4 py-6 text-white md:px-5">
+      <main className="min-h-screen bg-linear-to-br from-[#061a35] via-[#0A3670] to-[#061a35] px-4 py-6 text-white md:px-5">
         <section className="mx-auto max-w-7xl">
           <header className="mb-8 text-center">
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[1.6rem] bg-white text-5xl shadow-2xl">
