@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { DeliveryType, PaymentMethod } from '@prisma/client';
+
+type DeliveryType = 'PICKUP' | 'DELIVERY';
+type PaymentMethod = 'CASH' | 'NEQUI' | 'BANCOLOMBIA' | 'QR';
 
 type WhatsappOrderItem = {
   name: string;
@@ -100,10 +102,12 @@ export class WhatsappMessageService {
 
     lines.push('');
 
-    if (params.deliveryType === DeliveryType.DELIVERY) {
+    if (params.deliveryType === 'DELIVERY') {
       lines.push(`${this.E.delivery} *Entrega:* Domicilio`);
       lines.push(
-        `${this.E.location} *Dirección:* ${params.address || 'No especificada'}`,
+        `${this.E.location} *Dirección:* ${
+          params.address || 'No especificada'
+        }`,
       );
       lines.push(
         `${this.E.house} *Barrio:* ${params.neighborhood || 'No especificado'}`,
@@ -116,10 +120,12 @@ export class WhatsappMessageService {
     }
 
     lines.push(
-      `${this.E.card} *Método de pago:* ${this.getPaymentLabel(params.paymentMethod)}`,
+      `${this.E.card} *Método de pago:* ${this.getPaymentLabel(
+        params.paymentMethod,
+      )}`,
     );
 
-    if (params.deliveryType === DeliveryType.DELIVERY) {
+    if (params.deliveryType === 'DELIVERY') {
       lines.push(
         `${this.E.money} *Subtotal:* ${this.formatMoney(params.subtotal)}`,
       );
