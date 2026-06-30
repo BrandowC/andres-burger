@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DeliveryType, PaymentMethod } from '../../../generated/prisma/client';
+import { DeliveryType, PaymentMethod } from '@prisma/client';
+
 type WhatsappOrderItem = {
   name: string;
   emoji?: string | null;
@@ -34,92 +35,105 @@ type GenerateWhatsappMessageParams = {
 
 @Injectable()
 export class WhatsappMessageService {
+  private readonly E = {
+    burger: '\u{1F354}',
+    hotdog: '\u{1F32D}',
+    fries: '\u{1F35F}',
+    corn: '\u{1F33D}',
+    drink: '\u{1F964}',
+    juice: '\u{1F9C3}',
+    meat: '\u{1F969}',
+    chicken: '\u{1F357}',
+    user: '\u{1F464}',
+    phone: '\u{1F4F1}',
+    cart: '\u{1F6D2}',
+    note: '\u{1F4DD}',
+    delivery: '\u{1F6F5}',
+    pickup: '\u{1F6B6}',
+    location: '\u{1F4CD}',
+    house: '\u{1F3D8}',
+    pin: '\u{1F4CC}',
+    card: '\u{1F4B3}',
+    money: '\u{1F4B0}',
+    plate: '\u{1F37D}',
+  };
+
   generateMessage(params: GenerateWhatsappMessageParams): string {
-    const paymentLabel = this.getPaymentLabel(params.paymentMethod);
+    const lines: string[] = [];
 
-    const itemsText = params.items
-      .map((item) => {
-        const productLine = `${item.quantity} ${item.name} - ${this.formatMoney(
+    lines.push(`${this.E.burger} *Pedido ${params.businessName}*`);
+    lines.push(`*Código:* ${params.orderCode}`);
+    lines.push('');
+    lines.push(`${this.E.user} *Cliente:* ${params.customerName}`);
+    lines.push(`${this.E.phone} *Celular:* ${params.customerPhone}`);
+    lines.push('');
+    lines.push(`${this.E.cart} *Pedido:*`);
+
+    for (const item of params.items) {
+      const emoji = this.getSafeProductEmoji(item.name);
+
+      lines.push(
+        `• ${emoji} ${item.quantity} ${item.name} - ${this.formatMoney(
           item.subtotal,
-        )}`;
+        )}`,
+      );
 
-        const additionsText =
-          item.additions && item.additions.length > 0
-            ? item.additions
-                .map(
-                  (addition) =>
-                    `   + ${addition.quantity} ${addition.name} - ${this.formatMoney(
-                      addition.subtotal,
-                    )}`,
-                )
-                .join('\n')
-            : '';
+      if (item.additions && item.additions.length > 0) {
+        for (const addition of item.additions) {
+          lines.push(
+            `   + ${addition.quantity} ${addition.name} - ${this.formatMoney(
+              addition.subtotal,
+            )}`,
+          );
+        }
+      }
 
-        const noteText = item.note
-          ? `   *Nota del producto:*\n   ${item.note}`
-          : '';
+      if (item.note) {
+        lines.push(`   ${this.E.note} ${item.note}`);
+      }
+    }
 
-        return [productLine, additionsText, noteText]
-          .filter(Boolean)
-          .join('\n');
-      })
-      .join('\n');
+    if (params.customerNote) {
+      lines.push('');
+      lines.push(`${this.E.note} *Nota general:* ${params.customerNote}`);
+    }
 
-    const deliveryText =
-      params.deliveryType === DeliveryType.DELIVERY
-        ? `*Entrega:*
-Domicilio
+    lines.push('');
 
-*Dirección:*
-${params.address || 'No especificada'}
+    if (params.deliveryType === DeliveryType.DELIVERY) {
+      lines.push(`${this.E.delivery} *Entrega:* Domicilio`);
+      lines.push(
+        `${this.E.location} *Dirección:* ${params.address || 'No especificada'}`,
+      );
+      lines.push(
+        `${this.E.house} *Barrio:* ${params.neighborhood || 'No especificado'}`,
+      );
+      lines.push(
+        `${this.E.pin} *Referencia:* ${params.reference || 'Sin referencia'}`,
+      );
+    } else {
+      lines.push(`${this.E.pickup} *Entrega:* Recoger en local`);
+    }
 
-*Barrio:*
-${params.neighborhood || 'No especificado'}
+    lines.push(
+      `${this.E.card} *Método de pago:* ${this.getPaymentLabel(params.paymentMethod)}`,
+    );
 
-*Referencia:*
-${params.reference || 'Sin referencia'}`
-        : `*Entrega:*
-Recoger en local`;
+    if (params.deliveryType === DeliveryType.DELIVERY) {
+      lines.push(
+        `${this.E.money} *Subtotal:* ${this.formatMoney(params.subtotal)}`,
+      );
+      lines.push(`${this.E.delivery} *Domicilio:* Por confirmar`);
+      lines.push(`${this.E.money} *Total:* Por confirmar`);
+    } else {
+      lines.push(
+        `${this.E.money} *Total:* ${this.formatMoney(
+          params.total || params.subtotal,
+        )}`,
+      );
+    }
 
-    const totalText =
-      params.deliveryType === DeliveryType.DELIVERY
-        ? `*Subtotal:*
-${this.formatMoney(params.subtotal)}
-
-*Domicilio:*
-Por confirmar
-
-*Total:*
-Por confirmar`
-        : `*Total:*
-${this.formatMoney(params.total || params.subtotal)}`;
-
-    const noteText = params.customerNote
-      ? `
-*Nota general:*
-${params.customerNote}
-`
-      : '';
-
-    return `*Pedido ${params.businessName}*
-*Código:*
-${params.orderCode}
-
-*Cliente:*
-${params.customerName}
-
-*Celular:*
-${params.customerPhone}
-
-*Pedido:*
-${itemsText}
-${noteText}
-${deliveryText}
-
-*Método de pago:*
-${paymentLabel}
-
-${totalText}`;
+    return lines.join('\n');
   }
 
   generateWhatsappUrl(whatsappNumber: string, message: string): string {
@@ -146,5 +160,27 @@ ${totalText}`;
     };
 
     return labels[paymentMethod];
+  }
+
+  private getSafeProductEmoji(name: string): string {
+    const normalizedName = name.toLowerCase();
+
+    if (normalizedName.includes('hamburguesa')) return this.E.burger;
+    if (normalizedName.includes('perro')) return this.E.hotdog;
+    if (normalizedName.includes('papita')) return this.E.fries;
+    if (normalizedName.includes('salchipapa')) return this.E.fries;
+    if (normalizedName.includes('mazorcada')) return this.E.corn;
+    if (normalizedName.includes('coca')) return this.E.drink;
+    if (normalizedName.includes('postobón')) return this.E.drink;
+    if (normalizedName.includes('uva')) return this.E.drink;
+    if (normalizedName.includes('colombiana')) return this.E.drink;
+    if (normalizedName.includes('ginger')) return this.E.drink;
+    if (normalizedName.includes('jugo')) return this.E.juice;
+    if (normalizedName.includes('churrasco')) return this.E.meat;
+    if (normalizedName.includes('punta')) return this.E.meat;
+    if (normalizedName.includes('filete')) return this.E.meat;
+    if (normalizedName.includes('pechuga')) return this.E.chicken;
+
+    return this.E.plate;
   }
 }

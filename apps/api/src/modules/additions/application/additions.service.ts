@@ -97,17 +97,40 @@ export class AdditionsService {
       throw new NotFoundException('Adición no encontrada.');
     }
 
-    /*
-      No la borramos físicamente porque puede estar relacionada con pedidos antiguos.
-      Mejor la dejamos inactiva para que no aparezca disponible al cliente.
-    */
-    return this.prisma.addition.update({
+    const usedInOrders = await this.prisma.orderItemAddition.count({
+      where: {
+        additionId: id,
+      },
+    });
+
+    if (usedInOrders > 0) {
+      const disabledAddition = await this.prisma.addition.update({
+        where: {
+          id,
+        },
+        data: {
+          isActive: false,
+        },
+      });
+
+      return {
+        mode: 'soft-delete',
+        message:
+          'La adición ya fue usada en pedidos anteriores, por eso se desactivó en vez de borrarse.',
+        addition: disabledAddition,
+      };
+    }
+
+    const deletedAddition = await this.prisma.addition.delete({
       where: {
         id,
       },
-      data: {
-        isActive: false,
-      },
     });
+
+    return {
+      mode: 'hard-delete',
+      message: 'Adición eliminada correctamente.',
+      addition: deletedAddition,
+    };
   }
 }

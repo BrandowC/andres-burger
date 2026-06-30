@@ -115,18 +115,13 @@ export function AdminAdditionsManager() {
 
   async function deleteAddition(addition: AdminAddition) {
     const confirmed = window.confirm(
-      `¿Seguro que quieres eliminar "${addition.name}"? Ya no aparecerá como adición disponible.`,
+      `¿Seguro que quieres eliminar la adición "${addition.name}"?`,
     );
 
     if (!confirmed) return;
 
     try {
       await apiDelete(`/additions/${addition.id}`);
-
-      if (form.id === addition.id) {
-        setForm(emptyForm);
-      }
-
       await loadAdditions();
     } catch (error) {
       console.error(error);
@@ -238,7 +233,6 @@ export function AdminAdditionsManager() {
               <p className="mt-1 text-sm font-semibold text-slate-500">
                 {addition.isActive ? "Activa" : "Inactiva"}
               </p>
-
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -259,7 +253,7 @@ export function AdminAdditionsManager() {
                 <button
                   type="button"
                   onClick={() => deleteAddition(addition)}
-                  className="rounded-xl bg-red-500 px-4 py-2 text-sm font-black text-white"
+                  className="rounded-xl bg-red-100 px-4 py-2 text-sm font-black text-red-700"
                 >
                   Eliminar
                 </button>
