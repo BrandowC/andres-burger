@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { apiDelete, apiGet, apiPatch, apiPost, apiPublicGet } from "@/lib/api";
+import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { formatMoney } from "@/lib/money";
 import { AdminAddition } from "@/types/admin-addition";
 
@@ -24,10 +24,11 @@ export function AdminAdditionsManager() {
   const [additions, setAdditions] = useState<AdminAddition[]>([]);
   const [form, setForm] = useState<AdditionForm>(emptyForm);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   async function loadAdditions() {
     try {
-      const response = await apiPublicGet<AdminAddition[]>("/additions");
+      const response = await apiGet<AdminAddition[]>("/additions");
       setAdditions(response);
     } catch (error) {
       console.error(error);
@@ -54,14 +55,23 @@ export function AdminAdditionsManager() {
       return;
     }
 
+    const price = Number(form.price);
+
+    if (Number.isNaN(price) || price < 0) {
+      alert("El precio debe ser un número válido.");
+      return;
+    }
+
     const body = {
-      name: form.name,
-      price: Number(form.price),
-      emoji: form.emoji,
+      name: form.name.trim(),
+      price,
+      emoji: form.emoji.trim(),
       isActive: form.isActive,
     };
 
     try {
+      setSaving(true);
+
       if (form.id) {
         await apiPatch(`/additions/${form.id}`, body);
       } else {
@@ -73,6 +83,8 @@ export function AdminAdditionsManager() {
     } catch (error) {
       console.error(error);
       alert("No se pudo guardar la adición.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -89,11 +101,16 @@ export function AdminAdditionsManager() {
   }
 
   async function toggleAddition(addition: AdminAddition) {
-    await apiPatch(`/additions/${addition.id}`, {
-      isActive: !addition.isActive,
-    });
+    try {
+      await apiPatch(`/additions/${addition.id}`, {
+        isActive: !addition.isActive,
+      });
 
-    await loadAdditions();
+      await loadAdditions();
+    } catch (error) {
+      console.error(error);
+      alert("No se pudo cambiar el estado de la adición.");
+    }
   }
 
   async function deleteAddition(addition: AdminAddition) {
@@ -105,6 +122,11 @@ export function AdminAdditionsManager() {
 
     try {
       await apiDelete(`/additions/${addition.id}`);
+
+      if (form.id === addition.id) {
+        setForm(emptyForm);
+      }
+
       await loadAdditions();
     } catch (error) {
       console.error(error);
@@ -146,6 +168,7 @@ export function AdminAdditionsManager() {
             }
             placeholder="Precio. Ej: 5000"
             type="number"
+            min="0"
             className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 outline-none focus:border-blue-600"
           />
 
@@ -171,9 +194,14 @@ export function AdminAdditionsManager() {
 
           <button
             type="submit"
-            className="w-full rounded-2xl bg-cyan-300 px-5 py-4 text-lg font-black text-[#061a35]"
+            disabled={saving}
+            className="w-full rounded-2xl bg-cyan-300 px-5 py-4 text-lg font-black text-[#061a35] disabled:opacity-60"
           >
-            {form.id ? "Guardar cambios" : "Crear adición"}
+            {saving
+              ? "Guardando..."
+              : form.id
+                ? "Guardar cambios"
+                : "Crear adición"}
           </button>
 
           {form.id && (
