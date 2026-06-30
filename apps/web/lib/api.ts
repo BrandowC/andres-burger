@@ -19,7 +19,7 @@ function handleUnauthorized() {
   window.location.href = "/admin/login";
 }
 
-export async function apiGet<T>(path: string): Promise<T> {
+export async function apiGet<T>(path: string, p0: number): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     cache: "no-store",
     headers: {
@@ -132,6 +132,22 @@ export async function apiDelete<TResponse>(path: string): Promise<TResponse> {
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(errorText || `Error eliminando ${path}`);
+  }
+
+  return response.json();
+}
+export async function apiPublicGet<T>(
+  path: string,
+  revalidateSeconds = 60,
+): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, {
+    next: {
+      revalidate: revalidateSeconds,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error consultando ${path}`);
   }
 
   return response.json();

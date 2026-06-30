@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
+import { apiDelete, apiGet, apiPatch, apiPost, apiPublicGet } from "@/lib/api";
 import { formatMoney } from "@/lib/money";
 import { AdminAddition } from "@/types/admin-addition";
 
@@ -27,7 +27,7 @@ export function AdminAdditionsManager() {
 
   async function loadAdditions() {
     try {
-      const response = await apiGet<AdminAddition[]>("/additions");
+      const response = await apiPublicGet<AdminAddition[]>("/additions");
       setAdditions(response);
     } catch (error) {
       console.error(error);
@@ -114,7 +114,7 @@ export function AdminAdditionsManager() {
 
   if (loading) {
     return (
-      <div className="rounded-[2rem] bg-white p-8 text-center text-[#061a35]">
+      <div className="rounded-4xl bg-white p-8 text-center text-[#061a35]">
         <p className="text-5xl">➕</p>
         <p className="mt-4 text-xl font-black">Cargando adiciones...</p>
       </div>

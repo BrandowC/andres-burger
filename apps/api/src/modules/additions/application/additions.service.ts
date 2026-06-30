@@ -85,4 +85,48 @@ export class AdditionsService {
       },
     });
   }
+
+  async remove(id: string) {
+    const addition = await this.prisma.addition.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!addition) {
+      throw new NotFoundException('Adición no encontrada.');
+    }
+
+    /*
+      Si una adición ya fue usada en pedidos antiguos,
+      primero quitamos la relación directa, pero dejamos el snapshot:
+      - additionNameSnapshot
+      - additionPriceSnapshot
+      - subtotal
+
+      Así no se daña el historial de pedidos.
+    */
+    await this.prisma.$transaction([
+      this.prisma.orderItemAddition.updateMany({
+        where: {
+          additionId: id,
+        },
+        data: {
+          additionId: null,
+        },
+      }),
+
+      this.prisma.addition.delete({
+        where: {
+          id,
+        },
+      }),
+    ]);
+
+    return {
+      deleted: true,
+      id,
+      message: 'Adición eliminada correctamente.',
+    };
+  }
 }

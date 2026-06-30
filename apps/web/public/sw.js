@@ -37,21 +37,37 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
 
-  if (request.method !== "GET") {
-    return;
-  }
+  if (request.method !== "GET") return;
 
   const url = new URL(request.url);
 
+  /*
+    No cacheamos llamadas externas al backend.
+    El backend y admin deben mantenerse frescos.
+  */
   if (url.origin !== self.location.origin) {
     return;
   }
 
+  /*
+    No cachear panel administrativo.
+  */
+  if (url.pathname.startsWith("/admin")) {
+    return;
+  }
+
+  /*
+    Assets de Next.js: rápido con stale-while-revalidate.
+  */
   if (url.pathname.startsWith("/_next/")) {
     event.respondWith(staleWhileRevalidate(request));
     return;
   }
 
+  /*
+    Navegación pública:
+    intenta red primero, si falla usa cache.
+  */
   if (request.mode === "navigate") {
     event.respondWith(networkFirstNavigation(request));
     return;
@@ -75,18 +91,7 @@ async function networkFirstNavigation(request) {
       return cachedResponse;
     }
 
-    const offlineResponse = await caches.match("/offline");
-
-    if (offlineResponse) {
-      return offlineResponse;
-    }
-
-    return new Response("Sin conexión", {
-      status: 503,
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-      },
-    });
+    return caches.match("/offline");
   }
 }
 
@@ -94,20 +99,12 @@ async function staleWhileRevalidate(request) {
   const cache = await caches.open(CACHE_NAME);
   const cachedResponse = await cache.match(request);
 
-  try {
-    const networkResponse = await fetch(request);
-    cache.put(request, networkResponse.clone());
-    return cachedResponse || networkResponse;
-  } catch {
-    if (cachedResponse) {
-      return cachedResponse;
-    }
+  const fetchPromise = fetch(request)
+    .then((networkResponse) => {
+      cache.put(request, networkResponse.clone());
+      return networkResponse;
+    })
+    .catch(() => cachedResponse);
 
-    return new Response("Sin conexión", {
-      status: 503,
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-      },
-    });
-  }
+  return cachedResponse || fetchPromise;
 }
