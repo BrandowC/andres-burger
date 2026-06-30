@@ -66,7 +66,7 @@ export class MenuService {
         additions: {
           where: {
             isActive: true,
-            delete: null,
+            deletedAt: null,
           },
           orderBy: {
             name: 'asc',
